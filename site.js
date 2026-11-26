@@ -1,8 +1,17 @@
 const menu = document.querySelector('#mobile-menu');
 const menuTrigger = document.querySelector('[aria-controls="mobile-menu"]');
+const desktopBrand = document.querySelector('.site-header .brand');
 const desktopLayout = window.matchMedia('(min-width: 900px)');
 const root = document.documentElement;
+const notice = document.querySelector('#section-notice');
+const noticeMessage = notice.querySelector('.section-notice__message');
+const noticeStatus = document.querySelector('#section-notice-status');
+const sectionNames = new Map(
+  [...document.querySelectorAll('.site-nav [data-section]')]
+    .map((link) => [link.dataset.section, link.textContent.trim()])
+);
 let scrollBeforeMenu = 0;
+let noticeTrigger;
 
 function openMenu() {
   if (menu.open) return;
@@ -22,10 +31,35 @@ function finishClosingMenu() {
   window.scrollTo(0, scrollBeforeMenu);
   menuTrigger.setAttribute('aria-expanded', 'false');
 
-  if (desktopLayout.matches) {
-    document.querySelector('.site-header .brand').focus({ preventScroll: true });
-  } else {
-    menuTrigger.focus({ preventScroll: true });
+  headerFocusTarget().focus({ preventScroll: true });
+}
+
+function headerFocusTarget() {
+  return desktopLayout.matches ? desktopBrand : menuTrigger;
+}
+
+function closeMenu() {
+  menu.close();
+  // Unlock scrolling before the browser follows an in-page link.
+  finishClosingMenu();
+}
+
+function showNotice(name, trigger) {
+  const message = `Раздел «${name}» в разработке`;
+  noticeTrigger = trigger;
+  noticeMessage.textContent = message;
+  notice.hidden = false;
+  noticeStatus.textContent = message;
+}
+
+function hideNotice() {
+  const restoreFocus = notice.contains(document.activeElement);
+  notice.hidden = true;
+  noticeStatus.textContent = '';
+
+  if (restoreFocus) {
+    const target = noticeTrigger?.getClientRects().length ? noticeTrigger : headerFocusTarget();
+    target.focus({ preventScroll: true });
   }
 }
 
@@ -51,16 +85,39 @@ menu.addEventListener('keydown', (event) => {
   }
 });
 
-// As sections are built, their local IDs take over from the salon's public listing.
+// Ready sections keep native links. Until then, an enhanced page opens a notice.
 for (const link of document.querySelectorAll('[data-section]')) {
-  const section = document.getElementById(link.dataset.section);
-  if (section) link.href = `#${section.id}`;
+  const id = link.dataset.section;
+  const section = document.getElementById(id);
+  if (section) {
+    link.href = `#${section.id}`;
+    continue;
+  }
+
+  const trigger = document.createElement('button');
+  trigger.type = 'button';
+  trigger.className = link.className;
+  trigger.dataset.section = id;
+  trigger.setAttribute('aria-controls', notice.id);
+  trigger.append(...link.childNodes);
+  link.replaceWith(trigger);
+
+  trigger.addEventListener('click', async () => {
+    const fromMenu = menu.contains(trigger);
+    if (fromMenu) {
+      closeMenu();
+      await Promise.allSettled(menu.getAnimations().map((animation) => animation.finished));
+      if (menu.open) return;
+    }
+    showNotice(sectionNames.get(id), fromMenu ? menuTrigger : trigger);
+  });
 }
 
 menu.addEventListener('click', (event) => {
-  if (event.target === menu || event.target.closest('a')) {
-    menu.close();
-    // Unlock scrolling before the browser follows an in-page link.
-    finishClosingMenu();
-  }
+  if (event.target === menu || event.target.closest('a')) closeMenu();
+});
+
+notice.querySelector('.section-notice__close').addEventListener('click', hideNotice);
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && !menu.open && !notice.hidden) hideNotice();
 });

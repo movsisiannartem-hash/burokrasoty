@@ -73,6 +73,13 @@ body { margin: 0; min-inline-size: 0; }
 a { color: inherit; text-decoration: none; }
 button { color: inherit; font: inherit; }
 a, button { touch-action: manipulation; }
+button[data-section] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  text-align: start;
+}
 img { display: block; max-inline-size: 100%; }
 svg { flex: none; }
 
@@ -312,7 +319,10 @@ svg { flex: none; }
     inset-inline-end: clamp(23px, 2.45vw, 46px);
   }
 
-  .hero__intro { align-self: center; }
+  .hero__intro {
+    align-self: center;
+    margin-block-end: clamp(0px, calc(14svh - 72px), 48px);
+  }
 
   .hero-title {
     margin-block-end: clamp(21px, 2vw, 38px);
@@ -332,6 +342,13 @@ svg { flex: none; }
   .works-link { gap: clamp(7px, 0.62vw, 12px); }
   .works-link::after { opacity: 0.42; }
   .works-link__icon { width: 18px; height: 18px; }
+}
+
+@media (min-width: 1280px) {
+  .hero__grid {
+    grid-template-columns: minmax(0, 62%) minmax(0, 1fr);
+    column-gap: 3.4%;
+  }
 }
 
 @media (width < 900px) {
@@ -472,7 +489,7 @@ html.menu-open body { position: fixed; inset: var(--page-offset) 0 auto; }
   padding-block: clamp(30px, 9dvh, 93px) 38px;
 }
 
-.menu__nav a {
+.menu__nav :is(a, button) {
   display: flex;
   align-items: center;
   min-height: 49px;
@@ -480,11 +497,71 @@ html.menu-open body { position: fixed; inset: var(--page-offset) 0 auto; }
   letter-spacing: -0.037em;
 }
 
-.menu__nav a:active { color: #6e5144; }
+.menu__nav :is(a, button):active { color: #6e5144; }
 .menu__booking { width: 100%; margin-block-start: auto; }
+
+.section-notice {
+  position: fixed;
+  z-index: 1;
+  inset-inline-end: max(var(--gutter), env(safe-area-inset-right), calc((100% - var(--salon-width)) / 2 + var(--gutter)));
+  inset-block-end: max(16px, calc(env(safe-area-inset-bottom) + 10px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 8px 8px 18px;
+  border: 1px solid var(--taupe);
+  background: var(--paper);
+}
+
+.section-notice[hidden] { display: none; }
+
+.section-notice__message {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.38;
+}
+
+.section-notice__booking {
+  min-block-size: 44px;
+  padding-inline: 15px;
+  font-size: 14px;
+}
+
+.section-notice__close {
+  display: grid;
+  place-items: center;
+  inline-size: 44px;
+  block-size: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.section-notice__close:active { background: var(--powder); }
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 @media (width < 640px) {
   .menu { width: 100%; }
+
+  .section-notice {
+    inset-inline: max(var(--gutter), env(safe-area-inset-left)) max(var(--gutter), env(safe-area-inset-right));
+    gap: 8px;
+    padding-inline: 12px 5px;
+  }
+
+  .section-notice__booking { padding-inline: 11px; }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -498,14 +575,17 @@ html.menu-open body { position: fixed; inset: var(--page-offset) 0 auto; }
 
   .site-header:focus-within, .hero__actions:focus-within { animation: none; }
 
-  .menu[open] .menu__nav a {
+  .menu[open] .menu__nav :is(a, button) {
     animation: enter 380ms var(--editorial-ease) backwards;
     animation-delay: 90ms;
   }
 
-  .menu[open] .menu__nav a:nth-child(2) { animation-delay: 140ms; }
-  .menu[open] .menu__nav a:nth-child(3) { animation-delay: 190ms; }
-  .menu[open] .menu__nav a:focus-visible { animation: none; }
+  .menu[open] .menu__nav :nth-child(2) { animation-delay: 140ms; }
+  .menu[open] .menu__nav :nth-child(3) { animation-delay: 190ms; }
+  .menu[open] .menu__nav :nth-child(4) { animation-delay: 240ms; }
+  .menu[open] .menu__nav :focus-visible { animation: none; }
+
+  .section-notice { animation: enter 220ms var(--editorial-ease) backwards; }
 
   @media (width < 640px) {
     .collage__portrait { animation-duration: 680ms; }
